@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Tamagotchi</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: pink;
+        }
+
+        #container {
+            display: flex;
+            gap: 20px;
+        }
+
+        #tamagotchi-container {
+            text-align: center;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            width: 300px;
+        }
+
+        #tamagotchi-info {
+            margin-bottom: 20px;
+        }
+
+        #hambre-bar-container {
+            width: 100%;
+            height: 20px;
+            background-color: #eee;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+
+        #hambre-bar {
+            height: 100%;
+            border-radius: 5px;
+            background-color: #4caf50; /* Verde */
+            transition: width 1s linear;
+        }
+
+        #tamagotchi-image {
+            width: 150px;
+            height: 150px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        button {
+            padding: 0;
+            cursor: pointer;
+            background-color: transparent;
+            border: none;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+        button img{
+            width: 60px;
+            height: 60px;
+        }
+
+        #tiempo-restante {
+            margin-top: 10px;
+            color: #888;
+        }
+
+        #checklist-iframe {
+            border: none;
+            width: 100%;
+            height: 600px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+       #reloj-container {
+        margin-left: 20px;
+          display: flex;
+          align-items: center;
+          margin-top: 20px;
+          background-color: #fff;
+          border-radius: 10px;
+          box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+          padding: 10px;
+        }
+
+        #reloj-container div {
+          font-size: 20px;
+          margin: 0 5px;
+          color: #555;
+        }
+
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="tamagotchi-container">
+            <div id="tamagotchi-info">
+                <img id="tamagotchi-image" src="" alt="Tamagotchi">
+                <h2 style="color: #333;">Tamagotchi</h2>
+                <p><strong>Nombre:</strong> <span id="nombre" style="color: #555;"></span></p>
+                <p><strong>Género:</strong> <span id="genero" style="color: #555;"></span></p>
+                <p><strong>Etapa:</strong> <span id="etapa" style="color: #555;"></span></p>
+                <p><strong>Tiempo de Vida Total:</strong> <span id="tiempo-vida" style="color: #555;"></span></p>
+                <div id="hambre-bar-container">
+                    <div id="hambre-bar"></div>
+                    <p id="tiempo-restante"></p>
+                </div>
+                <button onclick="rellenarHambre()">
+                    <img src="comida.png" alt="Comida">
+                </button>
+            </div>
+            <button onclick="restablecerTamagotchi()">Restablecer Tamagotchi</button>
+        </div>
+        <iframe id="checklist-iframe" src="chek.html"></iframe>
+</div>
+<div id="reloj-container">
+      <div id="hora"></div>
+      <div id="dos-puntos">:</div>
+      <div id="minuto"></div>
+      <div id="dos-puntos">:</div>
+      <div id="segundo"></div>
+      <div id="ampm"></div>
+    </div>
+    </div>
+     
+    <script>
+        let tamagotchi = {
+            nombre: "",
+            genero: "",
+            etapa: "bebé",
+            tiempoDeVidaTotal: 0,
+            hambre: 100, // Inicialmente lleno
+            ultimaActualizacion: new Date().getTime(),
+        };
+
+        let canUseRellenarHambre = true; // Variable de control para el botón
+        let lastRellenarHambreTime = 0; // Variable para almacenar el tiempo del último uso del botón
+
+        function cargarDatos() {
+            const datosGuardados = localStorage.getItem("tamagotchiData");
+
+            if (datosGuardados) {
+                tamagotchi = JSON.parse(datosGuardados);
+                actualizarTamagotchi();
+            } else {
+                // Si no hay datos guardados, simular el nacimiento al cargar la página
+                nacerTamagotchi();
+            }
+        }
+
+        function guardarDatos() {
+            localStorage.setItem("tamagotchiData", JSON.stringify(tamagotchi));
+        }
+
+        function nacerTamagotchi() {
+            // Simulamos el evento de nacimiento solo si no hay datos guardados
+            tamagotchi.nombre = "";
+            tamagotchi.genero = obtenerGeneroAleatorio();
+            tamagotchi.tiempoDeVidaTotal = 0;
+            tamagotchi.etapa = "bebé";
+            tamagotchi.hambre = 100; // Inicialmente lleno
+
+            guardarDatos();
+            mostrarEstado();
+        }
+
+        function restablecerTamagotchi() {
+            tamagotchi.nombre = prompt("Ingresa el nombre:");
+            tamagotchi.genero = obtenerGeneroAleatorio();
+            tamagotchi.tiempoDeVidaTotal = 0;
+            tamagotchi.hambre = 100; // Llenar la barra de hambre al restablecer
+            canUseRellenarHambre = true; // Restablecer la posibilidad de usar el botón
+            lastRellenarHambreTime = 0; // Restablecer el tiempo del último uso del botón
+            guardarDatos();
+            mostrarEstado();
+        }
+
+        function obtenerGeneroAleatorio() {
+            return Math.random() < 0.5 ? "macho" : "hembra";
+        }
+
+        function calcularTiempoTranscurrido() {
+            const ahora = new Date().getTime();
+            const tiempoTranscurrido = (ahora - tamagotchi.ultimaActualizacion) / 1000; // en segundos
+            tamagotchi.tiempoDeVidaTotal += tiempoTranscurrido;
+            tamagotchi.ultimaActualizacion = ahora;
+
+            // Actualizar la barra de hambre progresivamente
+            const reduccionHambre = (tiempoTranscurrido / 43200*2) * 100; // Reducir la barra en 100% cada 12 horas
+            tamagotchi.hambre = Math.max(0, tamagotchi.hambre - reduccionHambre);
+        }
+
+        function actualizarTamagotchi() {
+            calcularTiempoTranscurrido();
+
+            if (tamagotchi.tiempoDeVidaTotal < 604800) {
+                tamagotchi.etapa = "bebé";
+            } else if (tamagotchi.tiempoDeVidaTotal < 1814400) {
+                tamagotchi.etapa = "niñez";
+            } else if (tamagotchi.tiempoDeVidaTotal < 2419200) {
+                tamagotchi.etapa = "adolescencia";
+            } else {
+                tamagotchi.etapa = "adulto";
+            }
+
+            guardarDatos();
+            mostrarEstado();
+            verificarMuerte(); // Llamar a la función para verificar si el Tamagotchi ha muerto
+        }
+
+        function mostrarEstado() {
+            document.getElementById("nombre").textContent = tamagotchi.nombre;
+            document.getElementById("genero").textContent = tamagotchi.genero;
+            document.getElementById("etapa").textContent = tamagotchi.etapa;
+
+            // Mostrar el tiempo de vida en días, horas y minutos
+            const tiempoVida = document.getElementById("tiempo-vida");
+            const tiempoVidaSegundos = tamagotchi.tiempoDeVidaTotal.toFixed(0); // Redondear a segundos
+            const dias = Math.floor(tiempoVidaSegundos / (24 * 60 * 60));
+            const horas = Math.floor((tiempoVidaSegundos % (24 * 60 * 60)) / 3600);
+            const minutos = Math.floor((tiempoVidaSegundos % 3600) / 60);
+
+            tiempoVida.textContent = `${dias} días, ${horas} horas, ${minutos} minutos`;
+
+            // Actualizar la barra de hambre
+            const hambreBar = document.getElementById("hambre-bar");
+            hambreBar.style.width = tamagotchi.hambre + "%";
+
+            // Mostrar el tiempo restante para rellenar el hambre
+            const tiempoRestante = document.getElementById("tiempo-restante");
+            if (!canUseRellenarHambre) {
+                const tiempoRestanteSegundos = Math.ceil(
+                    (2 * 60 * 60 * 1000 - (new Date().getTime() - lastRellenarHambreTime)) / 1000
+                );
+                tiempoRestante.textContent = `Puedes rellenar en: ${formatTiempo(tiempoRestanteSegundos)}`;
+            } else {
+                tiempoRestante.textContent = ""; // Limpiar el texto si no hay restricción
+            }
+
+            // Actualizar la imagen del Tamagotchi según la etapa
+            const tamagotchiImage = document.getElementById("tamagotchi-image");
+            switch (tamagotchi.etapa) {
+                case "bebé":
+                    tamagotchiImage.src = "bebe.gif";
+                    break;
+                case "niñez":
+                    tamagotchiImage.src = "nino.gif";
+                    break;
+                case "adolescencia":
+                    tamagotchiImage.src = "ado.gif";
+                    break;
+                case "adulto":
+                    tamagotchiImage.src = "adulto.gif";
+                    break;
+                default:
+                    tamagotchiImage.src = ""; // Puedes proporcionar una imagen por defecto si es necesario
+                    break;
+            }
+        }
+
+        function verificarMuerte() {
+            if (tamagotchi.hambre <= 0) {
+                alert("¡Tu Tamagotchi ha muerto!");
+                restablecerTamagotchi(); // Llamar a la función para restablecer el Tamagotchi
+            }
+        }
+
+        function rellenarHambre() {
+            if (canUseRellenarHambre) {
+                tamagotchi.hambre += 33; // Aumentar en un 33%
+                tamagotchi.hambre = Math.min(100, tamagotchi.hambre); // Limitar a un máximo del 100%
+                guardarDatos();
+                mostrarEstado();
+
+                canUseRellenarHambre = false; // Desactivar el botón
+                lastRellenarHambreTime = new Date().getTime(); // Almacenar el tiempo actual
+                setTimeout(() => {
+                    canUseRellenarHambre = true; // Habilitar el botón después de 2 horas
+                }, 2 * 60 * 60 * 1000); // 2 horas en milisegundos
+            }
+        }
+
+        function formatTiempo(segundos) {
+            const horas = Math.floor(segundos / 3600);
+            const minutos = Math.floor((segundos % 3600) / 60);
+            const segundosRestantes = segundos % 60;
+            return `${horas}h ${minutos}m ${segundosRestantes}s`;
+        }
+
+        function pasarTiempo() {
+            calcularTiempoTranscurrido();
+            actualizarTamagotchi();
+        }
+
+        setInterval(pasarTiempo, 1000);
+        cargarDatos();
+
+        function actualizarReloj() {
+          const now = new Date();
+          let hora = now.getHours();
+          const ampm = hora >= 12 ? 'PM' : 'AM';
+
+          // Convertir la hora al formato de 12 horas
+          hora = (hora % 12) || 12;
+
+          const minuto = now.getMinutes().toString().padStart(2, '0');
+          const segundo = now.getSeconds().toString().padStart(2, '0');
+
+          document.getElementById('hora').textContent = hora.toString().padStart(2, '0');
+          document.getElementById('minuto').textContent = minuto;
+          document.getElementById('segundo').textContent = segundo;
+
+          // Añadir AM/PM al reloj
+          document.getElementById('ampm').textContent = ampm;
+        }
+
+        setInterval(actualizarReloj, 1000);
+
+
+    </script>
+</body>
+</html>

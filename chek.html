@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checklist</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #ffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    form {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      width: 300px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #555;
+    }
+
+    input[type="text"] {
+      width: calc(100% - 16px);
+      padding: 8px;
+      margin-bottom: 12px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    button {
+      background-color: #4caf50;
+      color: #fff;
+      padding: 8px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    li {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    input[type="checkbox"] {
+      margin-right: 8px;
+    }
+
+    .delete-button {
+      background-color: #f44336;
+      color: #fff;
+      padding: 4px 8px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .delete-button:hover {
+      background-color: #d32f2f;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Checklist</h1>
+
+  <form id="checklistForm">
+    <label for="newItem">Añadir nueva entrada:</label>
+    <input type="text" id="newItem" autocomplete="off" />
+    <button type="button" onclick="addItem()">Añadir</button>
+
+    <ul id="itemList"></ul>
+
+    <button type="button" onclick="clearList()">Eliminar Lista</button>
+  </form>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      // Cargar elementos almacenados localmente al cargar la página
+      loadItems();
+    });
+
+    function addItem() {
+      var newItemInput = document.getElementById("newItem");
+      var newItemValue = newItemInput.value.trim();
+
+      if (newItemValue !== "") {
+        // Crear elemento de lista y checkbox
+        var listItem = document.createElement("li");
+        var checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.addEventListener("change", saveItems);
+        listItem.appendChild(checkbox);
+        listItem.appendChild(document.createTextNode(newItemValue));
+
+        // Añadir elemento a la lista
+        document.getElementById("itemList").appendChild(listItem);
+
+        // Guardar elementos localmente
+        saveItems();
+
+        // Limpiar el campo de entrada
+        newItemInput.value = "";
+      }
+    }
+
+    function clearList() {
+      var itemList = document.getElementById("itemList");
+      itemList.innerHTML = ""; // Eliminar todos los elementos de la lista
+      saveItems(); // Guardar la lista vacía
+    }
+
+    function saveItems() {
+      var itemList = [];
+      var items = document.querySelectorAll("#itemList li");
+
+      items.forEach(function(item) {
+        var checkbox = item.querySelector("input[type=checkbox]");
+        var text = item.textContent;
+
+        itemList.push({
+          text: text,
+          checked: checkbox.checked
+        });
+      });
+
+      localStorage.setItem("checklistItems", JSON.stringify(itemList));
+    }
+
+    function loadItems() {
+      var savedItems = localStorage.getItem("checklistItems");
+
+      if (savedItems) {
+        var itemList = JSON.parse(savedItems);
+
+        itemList.forEach(function(item) {
+          var listItem = document.createElement("li");
+          var checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.checked = item.checked;
+          checkbox.addEventListener("change", saveItems);
+          listItem.appendChild(checkbox);
+          listItem.appendChild(document.createTextNode(item.text));
+
+          // Añadir elemento a la lista
+          document.getElementById("itemList").appendChild(listItem);
+        });
+      }
+    }
+  </script>
+
+</body>
+</html>
